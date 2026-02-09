@@ -365,6 +365,7 @@ UM982PAOGIData PAOGIData;
 String PAOGISentence;
 HardwareSerial &SerialGPS = Serial3;
 
+
 void setup()
 {
   delay(500);             // short delay so monitor can come to life
@@ -453,7 +454,7 @@ void setup()
   um982parser.begin(SerialGPS, 3); // 3 metres
   Serial.println("\r\nGPS Setup Complete");
 
-  // RTK_Setup();
+  RTK_Setup();
 
   //----Teensy 4.1 CANBus--Start---------------------
 
@@ -520,26 +521,18 @@ void loop()
   const char *paogiBuffer = PAOGISentence.c_str();
   const size_t paogiLen = PAOGISentence.length();
 
-  if (um982parser.update())
-  {
-    if (um982parser.decodeAgricToPAOGI(msg, PAOGIData))
-    {
-      um982parser.formatPAOGISentence(PAOGIData, PAOGISentence);
-      Serial.print(PAOGISentence);
-    }
-    else
-    {
-      Serial.println("Failed to decode UM982 message");
-    }
-    um982parser.clearMessage();
-  }
   //--Main Timed Loop----------------------------------
-  if (currentTime - lastTime >= LOOP_TIME * 5)
+  if (currentTime - lastTime >= LOOP_TIME)
   {
     lastTime = currentTime;
-    Udp.beginPacket(ipDestination, 9999);
-    Udp.write(reinterpret_cast<const uint8_t *>(paogiBuffer), paogiLen);
-    Udp.endPacket();
+    if (PAOGIData.dgpsAgeSeconds > 100 || PAOGIData.dgpsAgeSeconds < 0 || PAOGIData.headingDegrees > 360 || 
+        PAOGIData.speedKnots > 100 || PAOGIData.headingDegrees < 0 || PAOGIData.speedKnots < 0|| PAOGIData.altitudeMeters < 0) {
+      Serial.println("Dropped bad data!");
+    } else {
+      Udp.beginPacket(ipDestination, 9999);
+      Udp.write(reinterpret_cast<const uint8_t *>(paogiBuffer), paogiLen);
+      Udp.endPacket();
+    }
     // reset debounce
     encEnable = true;
 
@@ -730,17 +723,23 @@ void loop()
 
   //--CAN--End-----
 
-  // if (gpsMode == 1 || gpsMode == 2)
-  // {
-  //   Forward_GPS();
-  // }
-  // else
-  // {
-  //   read_GPS();
-  // }
-
+  if (um982parser.update())
+  {
+    if (um982parser.decodeAgricToPAOGI(msg, PAOGIData))
+    {
+      if (PAOGIData.dgpsAgeSeconds < 100 && PAOGIData.dgpsAgeSeconds >= 0 && PAOGIData.headingDegrees <= 360)
+      {
+        um982parser.formatPAOGISentence(PAOGIData, PAOGISentence);
+        Serial.print(PAOGISentence);
+      }
+    }
+    else
+    {
+      Serial.println("Failed to decode UM982 message");
+    }
+    um982parser.clearMessage();
+  }
   Forward_Ntrip();
-
   // Check for UDP Packet
   int packetSize = Udp.parsePacket();
   if (packetSize)

@@ -76,7 +76,8 @@ void UM982Parser::begin(Stream &input, float antennaHeightMeters)
     _input->print("UNLOG\r\n");
     _input->print("CONFIG ANTENNA POWERON\r\n");
     _input->print("CONFIG NMEAVERSION V410\r\n");
-    _input->print("CONFIG RTK TIMEOUT 600\r\n");
+    //_input->print("CONFIG RTK TIMEOUT 600\r\n");
+    _input->print("CONFIG RTK TIMEOUT 20\r\n");
     _input->print("CONFIG RTK RELIABILITY 3 1\r\n");
     _input->print("CONFIG PPP TIMEOUT 300\r\n");
     _input->print("CONFIG SMOOTH RTKHEIGHT 0\r\n");
@@ -97,7 +98,8 @@ void UM982Parser::begin(Stream &input, float antennaHeightMeters)
     _input->print("CONFIG COM1 460800\r\n");
     _input->print("CONFIG COM2 460800\r\n");
     _input->print("CONFIG COM3 460800\r\n");
-    _input->print("MODE ROVER SURVEY\r\n");
+    //_input->print("MODE ROVER SURVEY\r\n");
+    _input->print("MODE ROVER UAV\r\n");
     _input->print("AGRICB 0.1\r\n");
     Serial.println("Config finished");
 }

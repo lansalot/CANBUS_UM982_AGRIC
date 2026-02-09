@@ -8,12 +8,10 @@
 char RTKrxbuffer[512]; // Extra serial rx buffer
 byte NtripData[512];
 
-
 char nmeaBuffer[200];
 int count = 0;
 bool stringComplete = false;
-elapsedMillis IMU_LastReadTime = 0;
-
+elapsedMillis lastNtrip = 0;
 
 int test = 0;
 
@@ -28,16 +26,18 @@ void RTK_Setup()
 
 //**************************************************************
 
-
 void Forward_Ntrip()
 {
   // Check for UDP Packet (Ntrip 2233)
   int NtripSize = NtripUdp.parsePacket();
   if (NtripSize)
   {
-    NtripUdp.read(NtripData, NtripSize);
-
-    SerialGPS.write(NtripData, NtripSize);
+    // if (lastNtrip > 150) // debounce to prevent flooding
+    // {
+      NtripUdp.read(NtripData, NtripSize);
+      SerialGPS.write(NtripData, NtripSize);
+      lastNtrip = 0;
+    //}
   }
 
   // Check for Radio RTK
