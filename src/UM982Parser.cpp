@@ -67,11 +67,13 @@ namespace
 
 UM982Parser::UM982Parser() = default;
 
-void UM982Parser::begin(Stream &input, float antennaHeightMeters)
+void UM982Parser::begin(HardwareSerial &input, float antennaHeightMeters)
 {
     _input = &input;
     _antennaHeightMeters = antennaHeightMeters;
     reset();
+    input.addMemoryForRead(_rxBuffer, sizeof(_rxBuffer));
+    _rxBufferEnabled = true;
     Serial.println("Resetting and configuring GPS");
     _input->print("UNLOG\r\n");
     _input->print("CONFIG ANTENNA POWERON\r\n");
@@ -515,4 +517,9 @@ uint8_t UM982Parser::computeNmeaChecksum(const String &sentence)
     }
 
     return checksum;
+}
+
+bool UM982Parser::isRxBufferEnabled() const
+{
+    return _rxBufferEnabled;
 }

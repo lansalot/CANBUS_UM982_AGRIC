@@ -48,9 +48,9 @@
 
 String inoVersion = ("\r\nAgOpenGPS Experimental UM982 AGRIC CANBUS Steering Module - Version 18.02.2024");
 
-#define useLED 1
-////////////////// User Settings /////////////////////////
 
+////////////////// User Settings /////////////////////////
+#define useLED 1
 // How many degrees before decreasing Max PWM
 #define LOW_HIGH_DEGREES 3.0
 
@@ -299,12 +299,6 @@ elapsedMillis elapsedIMULED;
 #define LED_IMU 29    // IMU status
 #endif
 
-// TM171 stuff
-constexpr int serial_buffer_size = 512;
-// roll moyenne flottante
-int samples = 0;
-float avg = 0;
-
 //*******************************************************************************
 // #include "zHandlers.ino"
 #include "CAN_All_Brands.ino"
@@ -452,6 +446,7 @@ void setup()
   Serial.println("\r\nStarting GPS and sending configuration");
   SerialGPS.begin(460800);
   um982parser.begin(SerialGPS, 3); // 3 metres
+  Serial.println(um982parser.isRxBufferEnabled() ? "GPS RX buffer: 1024 bytes" : "GPS RX buffer not enabled");
   Serial.println("\r\nGPS Setup Complete");
 
   RTK_Setup();
@@ -510,6 +505,7 @@ void setup()
   pinMode(LED_TEENSY, OUTPUT);
   digitalWrite(LED_TEENSY, LOW);
 #endif
+
 }
 // End of Setup
 
@@ -521,6 +517,19 @@ void loop()
   const char *paogiBuffer = PAOGISentence.c_str();
   const size_t paogiLen = PAOGISentence.length();
 
+  if (um982parser.update())
+  {
+    if (um982parser.decodeAgricToPAOGI(msg, PAOGIData))
+    {
+      um982parser.formatPAOGISentence(PAOGIData, PAOGISentence);
+      Serial.print(PAOGISentence);
+    }
+    else
+    {
+      Serial.println("Failed to decode UM982 message");
+    }
+    um982parser.clearMessage();
+  }
   //--Main Timed Loop----------------------------------
   if (currentTime - lastTime >= LOOP_TIME)
   {
@@ -683,7 +692,6 @@ void loop()
     // send empty pgn to AgIO to show activity
     if (++helloCounter > 10)
     {
-      Serial.println("Hello AgIO");
       Udp.beginPacket(ipDestination, AOGPort);
       Udp.write(helloAgIO, sizeof(helloAgIO));
       Udp.endPacket();
@@ -723,22 +731,7 @@ void loop()
 
   //--CAN--End-----
 
-  if (um982parser.update())
-  {
-    if (um982parser.decodeAgricToPAOGI(msg, PAOGIData))
-    {
-      if (PAOGIData.dgpsAgeSeconds < 100 && PAOGIData.dgpsAgeSeconds >= 0 && PAOGIData.headingDegrees <= 360)
-      {
-        um982parser.formatPAOGISentence(PAOGIData, PAOGISentence);
-        Serial.print(PAOGISentence);
-      }
-    }
-    else
-    {
-      Serial.println("Failed to decode UM982 message");
-    }
-    um982parser.clearMessage();
-  }
+
   Forward_Ntrip();
   // Check for UDP Packet
   int packetSize = Udp.parsePacket();
