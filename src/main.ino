@@ -46,7 +46,7 @@
 
 //----------------------------------------------------------
 
-String inoVersion = ("\r\nAgOpenGPS Experimental UM982 AGRIC CANBUS Steering Module - Version 18.02.2024");
+String inoVersion = ("\r\nAgOpenGPS Experimental UM982 AGRICB CANBUS Steering Module - Version 14.03.2026 (andyinv)");
 
 
 ////////////////// User Settings /////////////////////////
@@ -357,7 +357,7 @@ void Forward_Ntrip();
 UM982Parser um982parser;
 UM982PAOGIData PAOGIData;
 String PAOGISentence;
-HardwareSerial &SerialGPS = Serial3;
+HardwareSerial &SerialGPS = Serial3; // was 3
 
 
 void setup()
@@ -536,7 +536,7 @@ void loop()
     lastTime = currentTime;
     if (PAOGIData.dgpsAgeSeconds > 100 || PAOGIData.dgpsAgeSeconds < 0 || PAOGIData.headingDegrees > 360 || 
         PAOGIData.speedKnots > 100 || PAOGIData.headingDegrees < 0 || PAOGIData.speedKnots < 0|| PAOGIData.altitudeMeters < 0) {
-      Serial.println("Dropped bad data!");
+      //Serial.println("Dropped bad data!");
     } else {
       Udp.beginPacket(ipDestination, 9999);
       Udp.write(reinterpret_cast<const uint8_t *>(paogiBuffer), paogiLen);

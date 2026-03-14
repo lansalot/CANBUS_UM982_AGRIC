@@ -203,10 +203,8 @@ bool UM982Parser::decodeAgricToPAOGI(const UM982Message &message, UM982PAOGIData
         double latRad = outData.latitudeDegrees * DEG2RAD;
         double roll = outData.pitchDegrees * DEG2RAD;
         double heading = outData.headingDegrees * DEG2RAD;
-
         // --- vertical correction ---
         double altGround = outData.altitudeMeters - _antennaHeightMeters * std::cos(roll);
-
         // --- horizontal displacement ---
         double d = _antennaHeightMeters * std::sin(roll);
 
@@ -472,11 +470,11 @@ void UM982Parser::formatLatLon(double degrees, bool isLatitude, char *outBuffer,
 
     if (isLatitude)
     {
-        snprintf(outBuffer, outSize, "%02d%07.4f", wholeDegrees, minutes);
+        snprintf(outBuffer, outSize, "%02d%07.8f", wholeDegrees, minutes);
     }
     else
     {
-        snprintf(outBuffer, outSize, "%03d%07.4f", wholeDegrees, minutes);
+        snprintf(outBuffer, outSize, "%03d%07.8f", wholeDegrees, minutes);
     }
 }
 
